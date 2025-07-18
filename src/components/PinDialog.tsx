@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
 
+interface GitHubAsset {
+  name: string;
+  browser_download_url: string;
+}
+
 interface PinDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,14 +40,14 @@ const PinDialog: React.FC<PinDialogProps> = ({ isOpen, onClose }) => {
 
       // Find debug version (usually contains "debug" in name)
       const debugAsset = assets.find(
-        (asset: any) =>
+        (asset: GitHubAsset) =>
           asset.name.toLowerCase().includes("debug") ||
           asset.name.toLowerCase().includes("dev")
       );
 
       // Find release version (usually contains "release" in name or is the main asset)
       const releaseAsset = assets.find(
-        (asset: any) =>
+        (asset: GitHubAsset) =>
           asset.name.toLowerCase().includes("release") ||
           asset.name.toLowerCase().includes("prod") ||
           (!asset.name.toLowerCase().includes("debug") &&
