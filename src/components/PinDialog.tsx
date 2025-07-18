@@ -10,6 +10,7 @@ const PinDialog: React.FC<PinDialogProps> = ({ isOpen, onClose }) => {
   const [pin, setPin] = useState("");
   const CORRECT_PIN = process.env.NEXT_PUBLIC_PIN;
   const [linkDownload, setLinkDownload] = useState("");
+  const [linkDownloadRelease, setLinkDownloadRelease] = useState("");
   const [showDownloadLink, setShowDownloadLink] = useState(false);
   const [pinError, setPinError] = useState("");
 
@@ -27,7 +28,40 @@ const PinDialog: React.FC<PinDialogProps> = ({ isOpen, onClose }) => {
         "https://api.github.com/repos/CAR-dano/form-app/releases/latest"
       );
       const data = await response.json();
-      setLinkDownload(data.assets[0].browser_download_url);
+      console.log("GitHub API response:", data);
+
+      // Look for debug and release versions in assets
+      const assets = data.assets || [];
+
+      // Find debug version (usually contains "debug" in name)
+      const debugAsset = assets.find(
+        (asset: any) =>
+          asset.name.toLowerCase().includes("debug") ||
+          asset.name.toLowerCase().includes("dev")
+      );
+
+      // Find release version (usually contains "release" in name or is the main asset)
+      const releaseAsset = assets.find(
+        (asset: any) =>
+          asset.name.toLowerCase().includes("release") ||
+          asset.name.toLowerCase().includes("prod") ||
+          (!asset.name.toLowerCase().includes("debug") &&
+            !asset.name.toLowerCase().includes("dev"))
+      );
+
+      // Set download links
+      setLinkDownload(
+        debugAsset
+          ? debugAsset.browser_download_url
+          : assets[0]?.browser_download_url || ""
+      );
+      setLinkDownloadRelease(
+        releaseAsset
+          ? releaseAsset.browser_download_url
+          : assets[1]?.browser_download_url ||
+              assets[0]?.browser_download_url ||
+              ""
+      );
     } catch (error) {
       console.error("Error fetching GitHub API:", error);
     }
@@ -100,13 +134,24 @@ const PinDialog: React.FC<PinDialogProps> = ({ isOpen, onClose }) => {
               <p className="text-gray-600 mb-6 text-center">
                 Silakan klik tombol di bawah untuk mengunduh file Anda.
               </p>
-              <a
-                href={linkDownload}
-                download
-                className="px-6 py-3 bg-[#F4622F] text-white font-bold rounded-lg shadow-lg hover:bg-[#E24717] transition duration-300 ease-in-out transform hover:scale-105"
-              >
-                Download File
-              </a>
+              <div className="w-full flex flex-col items-center space-y-4">
+                <a
+                  href={linkDownloadRelease}
+                  download
+                  className="w-full px-6 py-3 bg-[#28A745] text-white font-bold rounded-lg shadow-lg hover:bg-[#218838] transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50"
+                  style={{ opacity: linkDownloadRelease ? 1 : 0.5 }}
+                >
+                  🚀 Inspector Version
+                </a>
+                <a
+                  href={linkDownload}
+                  download
+                  className="w-full  px-6 py-3 bg-[#F4622F] text-white font-bold rounded-lg shadow-lg hover:bg-[#E24717] transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50"
+                  style={{ opacity: linkDownload ? 1 : 0.5 }}
+                >
+                  🐛 Debug Version
+                </a>
+              </div>
               <button
                 onClick={onClose}
                 className="mt-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300 ease-in-out w-full"
